@@ -85,13 +85,12 @@ func GetSignalEventsAfterTime(timeTime time.Time) *SignalEvents {
 
 func (s *SignalEvents) CanBuy(time time.Time) bool {
 	lenSignals := len(s.Signals)
-
 	if lenSignals == 0 {
 		return true
 	}
 
 	lastSignal := s.Signals[lenSignals-1]
-	if lastSignal.Side == "SELL" && lastSignal.Time.Before(time){
+	if lastSignal.Side == "SELL" && lastSignal.Time.Before(time) {
 		return true
 	}
 	return false
@@ -99,13 +98,12 @@ func (s *SignalEvents) CanBuy(time time.Time) bool {
 
 func (s *SignalEvents) CanSell(time time.Time) bool {
 	lenSignals := len(s.Signals)
-
 	if lenSignals == 0 {
-		return true
+		return false
 	}
 
 	lastSignal := s.Signals[lenSignals-1]
-	if lastSignal.Side == "Buy" && lastSignal.Time.Before(time){
+	if lastSignal.Side == "BUY" && lastSignal.Time.Before(time) {
 		return true
 	}
 	return false
@@ -149,7 +147,6 @@ func (s *SignalEvents) Sell(productCode string, time time.Time, price, size floa
 	return true
 }
 
-//Calculate profit
 func (s *SignalEvents) Profit() float64 {
 	total := 0.0
 	beforeSell := 0.0
@@ -162,7 +159,7 @@ func (s *SignalEvents) Profit() float64 {
 			total -= signalEvent.Price * signalEvent.Size
 			isHolding = true
 		}
-		if signalEvent.Side == "SEL" {
+		if signalEvent.Side == "SELL" {
 			total += signalEvent.Price * signalEvent.Size
 			isHolding = false
 			beforeSell = total
