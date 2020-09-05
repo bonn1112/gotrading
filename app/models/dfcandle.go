@@ -214,3 +214,49 @@ func (df *DataFrameCandle) AddEvents(timeTime time.Time) bool {
 	}
 	return false
 }
+
+func (df *DataFrameCandle) BackTestEma(period1, period2 int) *SignalEvents {
+	lenCandles := len(df.Candles)
+	if lenCandles <= period1 || lenCandles <= period2 {
+		return nil
+	}
+	signalEvents := NewSignalEvents()
+	emaValue1 := talib.Ema(df.Closes(), period1)
+	emaValue2 := talib.Ema(df.Closes(), period2)
+
+	for i := 1;i < lenCandles; i++ {
+		if i < period1 || i < period2 {
+			continue
+		}
+		//take off !!
+		if emaValue1[i-1] < emaValue2[i-1] && emaValue1[i] >= emaValue2[i] {
+			signalEvents.Buy(df.ProductCode, df.Candles[i].Time, df.Candles[i].Close, 1.0, false)
+		}
+		//drop !!
+		if emaValue1[i-1] > emaValue2[i-1] && emaValue1[i] <= emaValue2[i] {
+			signalEvents.Sell(df.ProductCode, df.Candles[i].Time, df.Candles[i].Close, 1.0, false)
+		}
+	}
+	return signalEvents
+}
+
+func (df *DataFrameCandle) OptimizeEma() (performance float64, bestperiod1 int, bestperiod2 int) {
+	bestperiod1 = 7
+	bestperiod2 = 14
+
+	for period1 := 5; period1 < 11; period1++ {
+		for period2 := 12; period2 < 20; period2++ {
+			signalEvents := df.BackTestEma(period1, period2)
+			if signalEvents == nil {
+				continue
+			}
+			profit := signalEvents.Profit()
+			if performance < profit {
+				performance = profit
+				bestperiod1 = period1
+				bestperiod2 = period2
+			}
+		}
+	}
+	return performance, bestperiod1, bestperiod2
+} 
