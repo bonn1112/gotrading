@@ -1,3 +1,5 @@
+//To store buy and sell data
+
 package models
 
 import (
@@ -22,10 +24,12 @@ func (s *SignalEvent) Save() bool {
 	cmd := fmt.Sprintf("INSERT INTO %s (time, product_code, side, price, size) VALUES (?, ?, ?, ?, ?)", tableNameSignalEvents)
 	_, err := DbConnection.Exec(cmd, s.Time.Format(time.RFC3339), s.ProductCode, s.Side, s.Price, s.Size)
 	if err != nil {
+		//To avoid multiple trade in a period
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			log.Println(err)
 			return true
 		}
+		
 		return false
 	}
 	return true
