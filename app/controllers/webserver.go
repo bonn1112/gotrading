@@ -189,10 +189,10 @@ func apiCandleHandler(w http.ResponseWriter, r *http.Request) {
 
 	if events != "" {
 		if config.Config.BackTest{
-			performance, n, k := df.OptimizeBb()
-			log.Println(performance, n, k)
+			performance, p1, p2, p3 := df.OptimizeRsi()
+			log.Println(performance, p1, p2, p3)
 			if performance > 0 {
-				df.Events = df.BackTestBb(n, k)
+				df.Events = df.BackTestRsi(p1, p2, p3)
 			}
 		}else{
 			firstTime := df.Candles[0].Time
