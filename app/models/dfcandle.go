@@ -1,6 +1,7 @@
 package models
 
 import (
+	"os/signal"
 	"time"
 
 	"github.com/markcheno/go-talib"
@@ -341,3 +342,56 @@ func (df *DataFrameCandle) OptimizeIchimoku() (performance float64){
 	return performance
 }
 
+func (df *DataFrameCandle) BackTestMacd(macdFastPeriod, macdSlowPeriod, macdSignalPeriod int) *SignalEvents {
+	lenCandles := len(df.Candles)
+
+	if lenCandles <= macdFastPeriod || lenCandles <= macdSlowPeriod || lenCandles <= macdSignalPeriod {
+		return nil
+	}
+
+	signalEvents := &SignalEvents{}
+	outMACD, outMACDSignal, _ := talib.Macd(df.Closes(), macdFastPeriod, macdSlowPeriod, macdSignalPeriod)
+
+	for i := 1; i < lenCandles; i++ {
+		if outMACD[i] < 0 &&
+			outMACDSignal[i] < 0 &&
+			outMACD[i-1] < outMACDSignal[i-1] &&
+			outMACD[i] >= outMACDSignal[i] {
+				signalEvents.Buy(df.ProductCode, df.Candles[i].Time, df.Candles[i].Close, 1.0, false)
+			}
+
+		if outMACD[i] > 0 &&
+			outMACDSignal[i] > 0 &&
+			outMACD[i-1] > outMACDSignal[i-1] &&
+			outMACD[i] <= outMACDSignal[i] {
+				signalEvents.Sell(df.ProductCode, df.Candles[i].Time, df.Candles[i].Close, 1.0, false)
+		}
+	}
+
+	return signalEvents
+}
+
+func (df *DataFrameCandle) OptimizeMacd() (performance float64, bestMacdFirstPeriod, bestMacdSecondPeriod, bestMacdSignalPeriod int) {
+	bestMacdFirstPeriod = 12
+	bestMacdSecondPeriod = 26
+	bestMacdSignalPeriod = 9
+
+	for fast_period := 10; fast_period < 19; fast_period++ {
+		for second_period := 20; second_period < 30; second_period++ {
+			for signal_period := 5; signal_period < 15; signal_period++ {
+				signalEvent := df.BackTestMacd(fast_period, second_period, signal_period)
+				if signalEvent == nil {
+					continue
+				}
+				profit := signalEvent.Profit()
+				if profit > performance {
+					performance = profit
+					bestMacdFirstPeriod = fast_period
+					bestMacdSecondPeriod = second_period
+					bestMacdSignalPeriod = signal_period
+				}
+			} 
+		}
+	}
+	return performance, bestMacdFirstPeriod, bestMacdSecondPeriod, bestMacdSignalPeriod
+}
