@@ -27,7 +27,7 @@ https://www.investopedia.com/terms/m/macd.asp#:~:text=Moving%20Average%20Converg
 https://www.investopedia.com/ask/answers/012015/how-do-i-use-relative-strength-index-rsi-create-forex-trading-strategy.asp
 
 
-#Usage
+# Usage
 
 1. You have to create bitflyer account to generate api-key
 
@@ -35,7 +35,7 @@ https://lightning.bitflyer.com/
 
 2. Set api in config.ini file
 
-#Installation
+# Installation
 
 ```
 go get "github.com/markcheno/go-quote"
